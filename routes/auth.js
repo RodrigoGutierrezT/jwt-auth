@@ -30,14 +30,37 @@ router.post('/register', async (req,res) => {
     });
     try {
         const savedUser = await user.save();
-        res.send(savedUser);
+        res.send({
+            user: savedUser._id,
+            name: savedUser.name
+        });
     } catch (err) {
         res.status(400).send(err);
     }
 });
 
-// router.post('/login', (req,res) => {
+router.post('/login', async (req,res) => {
 
-// });
+        // validate data before login
+        const { error } = loginValidation(req.body);
+
+        if(error) {
+            return res.status(400).send(error.details[0].message);
+        }
+
+        // Check if the email exists
+        const user = await User.findOne({email: req.body.email});
+        if(!user) {
+            return res.status(400).send('Email or password is wrong');
+        }
+
+        // Check if password is correct
+        const validPass = await bcrypt.compare(req.body.password, user.password);
+        if(!validPass) {
+            return res.status(400).send('Email or password is wrong');
+        }
+
+        res.send('Logged in!');
+});
 
 module.exports = router;
